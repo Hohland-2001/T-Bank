@@ -170,7 +170,10 @@ def get_stock_prices() -> list | None:
     try:
         user_currency = read_json_file()["user_stocks"]
         all_list = []
-        API_KEY = "DAxlMjchHZl9d2Tq9ZOYB3nbWLrXsRpR"
+
+        load_dotenv(".env")
+        API_KEY = os.getenv("API_KEY")
+
         for i in user_currency:
             url = "https://financialmodelingprep.com/stable/quote-short?" f"symbol={i}&apikey={API_KEY}"
             response = requests.get(url)
