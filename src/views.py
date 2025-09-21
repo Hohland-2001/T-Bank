@@ -18,6 +18,3 @@ def main_func(date_time: str | None = None) -> Any:
     }
     json_response = json.dumps(response, ensure_ascii=False, indent=4)
     return json_response
-
-
-print(main_func("2021-08-14 18:50:16"))

@@ -37,7 +37,7 @@ def get_list_cards(date_time: str) -> list:
 
 
 def get_data_in_period(
-    date_time: str = None, date_format: str = "%Y-%m-%d %H:%M:%S", df: pd.DataFrame = read_xlsx_file()
+        date_time: str = None, date_format: str = "%Y-%m-%d %H:%M:%S", df: pd.DataFrame = read_xlsx_file()
 ) -> pd.DataFrame:
     """Функция получает дату и возвращает таблицу данных за период с начала месяца по заданную дату"""
     if date_time is None:
