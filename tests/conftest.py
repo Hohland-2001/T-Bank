@@ -1,12 +1,11 @@
-from unittest.mock import patch
-from src.services import search
-import datetime
 import pytest
+import datetime
+import pandas as pd
 
 
-@patch('json.dumps')
-def test_search(mock):
-    mock.return_value = {
+@pytest.fixture
+def df_transactions() -> pd.DataFrame:
+    transactions = {
         'Дата операции': [
             datetime.datetime.strptime('12.11.2005 14:05:44', '%d.%m.%Y %H:%M:%S'),
             datetime.datetime.strptime('08.11.2005 22:49:26', '%d.%m.%Y %H:%M:%S'),
@@ -26,12 +25,12 @@ def test_search(mock):
         'Сумма платежа': [-165.89, -862.46, -352.62, -32.75],
         'Валюта платежа': ['RUB', 'RUB', 'RUB', 'RUB'],
         'Кэшбэк': [0.00, 0.00, 0.00, 0.00],
-        'Категория': ['Супермаркет'],
+        'Категрия': ['Супермаркет', 'Каршеринг', 'Переводы', 'Дом и ремонт'],
         'МСС': ['5412', '8624', '7265', '3541'],
         'Описание': ['wrw', 'dfk', 'nnk', 'ienn'],
         'Бонусы(включая кэшбэк)': [2.00, 9.00, 6.00, 4.00],
         'Округление на инвесткопилку': [0.00, 0.00, 0.00, 0.00],
         'Сумма операции с округлением': [165.89, 862.46, 352.62, 32.75]
     }
-    assert search() == []
-    assert search(words='Супермаркет') == mock.return_value
+    df = pd.DataFrame(transactions)
+    return df

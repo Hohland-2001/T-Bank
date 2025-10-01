@@ -1,10 +1,12 @@
 import json
 from typing import Any
 
-from read_data import read_xlsx_file
+import pandas as pd
+
+from src.read_data import read_xlsx_file
 
 
-def search(words: str = None) -> Any:
+def search(words: str = None, tr: pd.DataFrame = read_xlsx_file()) -> Any:
     """Функция возвращает json-ответ с найденным словом пользователя в описании или категории операции"""
     if words is None:
         return []

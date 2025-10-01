@@ -5,7 +5,7 @@ import pandas as pd
 import requests
 from dotenv import load_dotenv
 
-from read_data import read_json_file, read_xlsx_file
+from src.read_data import read_json_file, read_xlsx_file
 
 
 def greeting() -> str:
@@ -23,25 +23,27 @@ def greeting() -> str:
     return result
 
 
-def get_list_cards(date_time: str) -> list:
+def get_list_cards(date_time: str = None, df: pd.DataFrame = read_xlsx_file()) -> list:
     """Функция получает дату и выдаёт информацию по каждой карте от начала месяца до заданной даты"""
-    df = get_data_in_period(date_time)
+    df_filter = get_data_in_period(date_time=date_time, df=df)
     all_list = []
-    for i in range(len(get_list_last_digits(df))):
+    for i in range(len(get_list_last_digits(df_filter))):
         all_dict = {}
-        all_dict["last_digits"] = get_list_last_digits(df)[i]
-        all_dict["total_spent"] = get_list_total_spent(df)[i]
-        all_dict["cashback"] = get_list_cashback(df)[i]
+        all_dict["last_digits"] = get_list_last_digits(df_filter)[i]
+        all_dict["total_spent"] = get_list_total_spent(df_filter)[i]
+        all_dict["cashback"] = get_list_cashback(df_filter)[i]
         all_list.append(all_dict)
     return all_list
 
 
 def get_data_in_period(
         date_time: str = None, date_format: str = "%Y-%m-%d %H:%M:%S", df: pd.DataFrame = read_xlsx_file()
-) -> pd.DataFrame:
+) -> pd.DataFrame | None:
     """Функция получает дату и возвращает таблицу данных за период с начала месяца по заданную дату"""
     if date_time is None:
         return df
+    elif df is None:
+        return None
     else:
         end_date = datetime.datetime.strptime(date_time, date_format)
         start_date = end_date.replace(day=1, hour=00, minute=00, second=00)
@@ -86,13 +88,13 @@ def get_list_total_spent(df: pd.DataFrame) -> list:
         while index < max_index:
             for i in df_not_null.iloc[:, 2]:
                 if i == card:
-                    count_total += float(df_not_null.iloc[index, 4] * -1)
+                    count_total += float(df_not_null.iloc[index, -1])
                     index += 1
                 else:
                     index += 1
             list_total_spent.append(round(count_total, 2))
-        else:
-            index = 0
+        index = 0
+        count_total = 0
     return list_total_spent
 
 
@@ -106,43 +108,46 @@ def get_list_cashback(df: pd.DataFrame) -> list:
     return list_cashback
 
 
-def get_list_top_transactions(date_time: str = None):
+def get_list_top_transactions(date_time: str = None) -> list | None:
     """Функция получает дату и выдаёт топ-5 транзакций от начала месяца до заданной даты"""
-    df = get_data_in_period(date_time)
-    df_not_null = df.loc[df["Номер карты"].notnull()]
-    df_top_amount = df_not_null.nlargest(5, "Сумма операции с округлением")
-    list_top_amount = []
-    list_top_date = []
-    list_top_category = []
-    list_top_description = []
-    all_list = []
-    for i, row in df_top_amount.items():
-        if i == "Сумма операции с округлением":
-            for r in row:
-                list_top_amount.append(r)
-        elif i == "Дата операции":
-            for r in row:
-                list_top_date.append(r.strftime("%d.%m.%Y"))
-        elif i == "Категория":
-            for r in row:
-                list_top_category.append(r)
-        elif i == "Описание":
-            for r in row:
-                list_top_description.append(r)
-    for n in range(len(list_top_date)):
-        all_dict = {}
-        all_dict["date"] = list_top_date[n]
-        all_dict["amount"] = list_top_amount[n]
-        all_dict["category"] = list_top_category[n]
-        all_dict["description"] = list_top_description[n]
-        all_list.append(all_dict)
-    return all_list
+    if date_time is None:
+        return None
+    else:
+        df = get_data_in_period(date_time)
+        df_not_null = df.loc[df["Номер карты"].notnull()]
+        df_top_amount = df_not_null.nlargest(5, "Сумма операции с округлением")
+        list_top_amount = []
+        list_top_date = []
+        list_top_category = []
+        list_top_description = []
+        all_list = []
+        for i, row in df_top_amount.items():
+            if i == "Сумма операции с округлением":
+                for r in row:
+                    list_top_amount.append(r)
+            elif i == "Дата операции":
+                for r in row:
+                    list_top_date.append(r.strftime("%d.%m.%Y"))
+            elif i == "Категория":
+                for r in row:
+                    list_top_category.append(r)
+            elif i == "Описание":
+                for r in row:
+                    list_top_description.append(r)
+        for n in range(len(list_top_date)):
+            all_dict = {}
+            all_dict["date"] = list_top_date[n]
+            all_dict["amount"] = list_top_amount[n]
+            all_dict["category"] = list_top_category[n]
+            all_dict["description"] = list_top_description[n]
+            all_list.append(all_dict)
+        return all_list
 
 
-def get_currency_rates() -> list | None:
-    """Функция возвращает курсы валют, заданные пользователем в user_settings.json"""
+def get_currency_rates(path_to_file_settings: str = '../data/user_settings.json') -> list | None:
+    """Функция возвращает курсы валют, заданные пользователем в json-файле"""
     try:
-        user_currency = read_json_file()["user_currencies"]
+        user_currency = read_json_file(path_to_file_settings)["user_currencies"]
         all_list = []
 
         load_dotenv(".env")
@@ -165,10 +170,10 @@ def get_currency_rates() -> list | None:
         return None
 
 
-def get_stock_prices() -> list | None:
+def get_stock_prices(path_to_file_settings: str = '../data/user_settings.json') -> list | None:
     """Функция возвращает курсы акций, заданные пользователем в user_settings.json"""
     try:
-        user_currency = read_json_file()["user_stocks"]
+        user_currency = read_json_file(path_to_file_settings)["user_stocks"]
         all_list = []
 
         load_dotenv(".env")
