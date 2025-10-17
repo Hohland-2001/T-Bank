@@ -30,7 +30,7 @@ def test_get_list_card(df_transactions) -> None:
 
 
 def test_get_data_in_period(df_transactions) -> None:
-    assert get_data_in_period(df=None) == None
+    assert get_data_in_period(df=None) is None
 
 
 def test_get_list_last_digits(df_transactions) -> None:
@@ -45,9 +45,9 @@ def test_get_list_cashback(df_transactions) -> None:
     assert get_list_cashback(df_transactions) == [1.66, 8.62, 3.53, 0.33]
 
 
-def test_get_list_top_transactions(df_transactions) -> None:
+def test_get_list_top_transactions(df_transactions):
     assert get_list_top_transactions() is None
-    assert get_list_top_transactions('2005-11-09 10:45:15') == []
+    assert get_list_top_transactions('2005-11-09 10:45:15', df=df_transactions) == []
 
 
 @patch('requests.get')
@@ -72,23 +72,23 @@ def test_get_stock_prices(mock_get):
     mock_get.return_value.json.return_value = [{"price": 2.05}]
     assert get_stock_prices() == [
         {
-            'price': 2.05,
             'stock': 'AAPL',
+            'price': 2.05
         },
         {
-            'price': 2.05,
             'stock': 'AMZN',
+            'price': 2.05
         },
         {
-            'price': 2.05,
             'stock': 'GOOGL',
+            'price': 2.05
         },
         {
-            'price': 2.05,
             'stock': 'MSFT',
+            'price': 2.05,
         },
         {
-            'price': 2.05,
             'stock': 'TSLA',
+            'price': 2.05
         },
     ]

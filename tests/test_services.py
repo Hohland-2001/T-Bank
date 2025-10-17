@@ -1,7 +1,7 @@
 from unittest.mock import patch
 from src.services import search
+import pandas as pd
 import datetime
-import pytest
 
 
 @patch('json.dumps')
@@ -26,7 +26,7 @@ def test_search(mock):
         'Сумма платежа': [-165.89, -862.46, -352.62, -32.75],
         'Валюта платежа': ['RUB', 'RUB', 'RUB', 'RUB'],
         'Кэшбэк': [0.00, 0.00, 0.00, 0.00],
-        'Категория': ['Супермаркет'],
+        'Категория': ['Супермаркеты', "Супермаркеты", "Супермаркеты", "Супермаркеты"],
         'МСС': ['5412', '8624', '7265', '3541'],
         'Описание': ['wrw', 'dfk', 'nnk', 'ienn'],
         'Бонусы(включая кэшбэк)': [2.00, 9.00, 6.00, 4.00],
@@ -34,4 +34,4 @@ def test_search(mock):
         'Сумма операции с округлением': [165.89, 862.46, 352.62, 32.75]
     }
     assert search() == []
-    assert search(words='Супермаркет') == mock.return_value
+    assert search('Супермаркеты') == mock.return_value

@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 
 import pandas as pd
@@ -6,6 +7,14 @@ import requests
 from dotenv import load_dotenv
 
 from src.read_data import read_json_file, read_xlsx_file
+
+log_file_path = os.path.join(os.path.dirname(__file__), "../logs/utils.log")
+logger = logging.getLogger("utils")
+logger.setLevel(logging.DEBUG)
+file_handler = logging.FileHandler(f"{log_file_path}", encoding="utf-8", mode="w")
+file_formatter = logging.Formatter("%(asctime)s %(filename)s %(levelname)s %(message)s")
+file_handler.setFormatter(file_formatter)
+logger.addHandler(file_handler)
 
 
 def greeting() -> str:
@@ -37,7 +46,7 @@ def get_list_cards(date_time: str = None, df: pd.DataFrame = read_xlsx_file()) -
 
 
 def get_data_in_period(
-        date_time: str = None, date_format: str = "%Y-%m-%d %H:%M:%S", df: pd.DataFrame = read_xlsx_file()
+    date_time: str = None, date_format: str = "%Y-%m-%d %H:%M:%S", df: pd.DataFrame = read_xlsx_file()
 ) -> pd.DataFrame | None:
     """Функция получает дату и возвращает таблицу данных за период с начала месяца по заданную дату"""
     if date_time is None:
@@ -108,12 +117,12 @@ def get_list_cashback(df: pd.DataFrame) -> list:
     return list_cashback
 
 
-def get_list_top_transactions(date_time: str = None) -> list | None:
+def get_list_top_transactions(date_time: str = None, df: pd.DataFrame = get_data_in_period()) -> list | None:
     """Функция получает дату и выдаёт топ-5 транзакций от начала месяца до заданной даты"""
     if date_time is None:
         return None
     else:
-        df = get_data_in_period(date_time)
+        # df = get_data_in_period(date_time)
         df_not_null = df.loc[df["Номер карты"].notnull()]
         df_top_amount = df_not_null.nlargest(5, "Сумма операции с округлением")
         list_top_amount = []
@@ -144,7 +153,7 @@ def get_list_top_transactions(date_time: str = None) -> list | None:
         return all_list
 
 
-def get_currency_rates(path_to_file_settings: str = '../data/user_settings.json') -> list | None:
+def get_currency_rates(path_to_file_settings: str = "../T-Bank/data/user_settings.json") -> list | None:
     """Функция возвращает курсы валют, заданные пользователем в json-файле"""
     try:
         user_currency = read_json_file(path_to_file_settings)["user_currencies"]
@@ -167,10 +176,11 @@ def get_currency_rates(path_to_file_settings: str = '../data/user_settings.json'
         return all_list
     except Exception as e:
         print(f"Произошла ошибка {e}")
+        logger.error(f"Произошла ошибка {e}")
         return None
 
 
-def get_stock_prices(path_to_file_settings: str = '../data/user_settings.json') -> list | None:
+def get_stock_prices(path_to_file_settings: str = "../T-Bank/data/user_settings.json") -> list | None:
     """Функция возвращает курсы акций, заданные пользователем в user_settings.json"""
     try:
         user_currency = read_json_file(path_to_file_settings)["user_stocks"]
@@ -180,7 +190,7 @@ def get_stock_prices(path_to_file_settings: str = '../data/user_settings.json') 
         API_KEY = os.getenv("API_KEY")
 
         for i in user_currency:
-            url = "https://financialmodelingprep.com/stable/quote-short?" f"symbol={i}&apikey={API_KEY}"
+            url = f"https://financialmodelingprep.com/stable/quote-short?symbol={i}&apikey={API_KEY}"
             response = requests.get(url)
             all_dict = {}
             all_dict["stock"] = i
@@ -189,4 +199,5 @@ def get_stock_prices(path_to_file_settings: str = '../data/user_settings.json') 
         return all_list
     except Exception as e:
         print(f"Произошла ошибка {e}")
+        logger.error(f"Произошла ошибка {e}")
         return None

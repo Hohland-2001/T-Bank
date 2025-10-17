@@ -1,4 +1,6 @@
 import functools
+import logging
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
@@ -6,6 +8,14 @@ from typing import Any, Callable
 import pandas as pd
 
 from src.read_data import read_xlsx_file
+
+log_file_path = os.path.join(os.path.dirname(__file__), "../logs/reports.log")
+logger = logging.getLogger("reports")
+logger.setLevel(logging.DEBUG)
+file_handler = logging.FileHandler(f"{log_file_path}", encoding="utf-8", mode="w")
+file_formatter = logging.Formatter("%(asctime)s %(filename)s %(levelname)s %(message)s")
+file_handler.setFormatter(file_formatter)
+logger.addHandler(file_handler)
 
 
 def save_report_flexible(filename_or_func=None) -> Any:
@@ -57,7 +67,7 @@ def save_report_flexible(filename_or_func=None) -> Any:
 
             except Exception as e:
                 print(f"Ошибка при записи отчета в файл: {e}")
-
+                logger.error(f"Ошибка при записи отчета в файл: {e}")
             return result
 
         return wrapper
@@ -87,4 +97,5 @@ def spending_by_category(
         return result_df
     except Exception as e:
         print(f"Произошла ошибка {e}")
+        logger.error(f"Произошла ошибка {e}")
         return None
