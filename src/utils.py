@@ -32,9 +32,28 @@ def greeting() -> str:
     return result
 
 
-def get_list_cards(date_time: str = None, df: pd.DataFrame = read_xlsx_file()) -> list:
+def get_data_in_period(
+    date_time: str = None, date_format: str = "%Y-%m-%d %H:%M:%S", df: str = None
+) -> pd.DataFrame | None:
+    """Функция получает дату и возвращает таблицу данных за период с начала месяца по заданную дату"""
+    if date_time is None:
+        return df
+    elif df is None:
+        return None
+    else:
+        data = read_xlsx_file(df)
+        end_date = datetime.datetime.strptime(date_time, date_format)
+        start_date = end_date.replace(day=1, hour=00, minute=00, second=00)
+        list_date = [start_date.strftime("%d.%m.%Y %H:%M:%S"), end_date.strftime("%d.%m.%Y %H:%M:%S")]
+        data["Дата операции"] = pd.to_datetime(data["Дата операции"], dayfirst=True)
+        start_date = datetime.datetime.strptime(list_date[0], "%d.%m.%Y %H:%M:%S")
+        end_date = datetime.datetime.strptime(list_date[1], "%d.%m.%Y %H:%M:%S")
+        filtered_df = data[(data["Дата операции"] >= start_date) & (data["Дата операции"] <= end_date)]
+        return filtered_df
+
+
+def get_list_cards(date_time: str = None, df_filter: str | pd.DataFrame = get_data_in_period()) -> list:
     """Функция получает дату и выдаёт информацию по каждой карте от начала месяца до заданной даты"""
-    df_filter = get_data_in_period(date_time=date_time, df=df)
     all_list = []
     for i in range(len(get_list_last_digits(df_filter))):
         all_dict = {}
@@ -45,26 +64,7 @@ def get_list_cards(date_time: str = None, df: pd.DataFrame = read_xlsx_file()) -
     return all_list
 
 
-def get_data_in_period(
-    date_time: str = None, date_format: str = "%Y-%m-%d %H:%M:%S", df: pd.DataFrame = read_xlsx_file()
-) -> pd.DataFrame | None:
-    """Функция получает дату и возвращает таблицу данных за период с начала месяца по заданную дату"""
-    if date_time is None:
-        return df
-    elif df is None:
-        return None
-    else:
-        end_date = datetime.datetime.strptime(date_time, date_format)
-        start_date = end_date.replace(day=1, hour=00, minute=00, second=00)
-        list_date = [start_date.strftime("%d.%m.%Y %H:%M:%S"), end_date.strftime("%d.%m.%Y %H:%M:%S")]
-        df["Дата операции"] = pd.to_datetime(df["Дата операции"], dayfirst=True)
-        start_date = datetime.datetime.strptime(list_date[0], "%d.%m.%Y %H:%M:%S")
-        end_date = datetime.datetime.strptime(list_date[1], "%d.%m.%Y %H:%M:%S")
-        filtered_df = df[(df["Дата операции"] >= start_date) & (df["Дата операции"] <= end_date)]
-        return filtered_df
-
-
-def get_list_last_digits(df: pd.DataFrame) -> list:
+def get_list_last_digits(df: pd.DataFrame | None = None) -> list:
     """Функция получает DataFrame и возвращает список номеров карт без *"""
     df_not_null = df.loc[df["Номер карты"].notnull()]
     card_list_new = []
@@ -122,9 +122,8 @@ def get_list_top_transactions(date_time: str = None, df: pd.DataFrame = get_data
     if date_time is None:
         return None
     else:
-        # df = get_data_in_period(date_time)
-        df_not_null = df.loc[df["Номер карты"].notnull()]
-        df_top_amount = df_not_null.nlargest(5, "Сумма операции с округлением")
+        # df_not_null = df.loc[df["Номер карты"].notnull()]
+        df_top_amount = df.nlargest(5, "Сумма операции с округлением")
         list_top_amount = []
         list_top_date = []
         list_top_category = []
@@ -136,14 +135,14 @@ def get_list_top_transactions(date_time: str = None, df: pd.DataFrame = get_data
                     list_top_amount.append(r)
             elif i == "Дата операции":
                 for r in row:
-                    list_top_date.append(r.strftime("%d.%m.%Y"))
+                    list_top_date.append(r)
             elif i == "Категория":
                 for r in row:
                     list_top_category.append(r)
             elif i == "Описание":
                 for r in row:
                     list_top_description.append(r)
-        for n in range(len(list_top_date)):
+        for n in range(len(list_top_category)):
             all_dict = {}
             all_dict["date"] = list_top_date[n]
             all_dict["amount"] = list_top_amount[n]
